@@ -115,6 +115,8 @@ jobs:
             exit 0
           fi
           git commit -m "Generate Eaglercraft 26.2 u2 workspace"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
 
       - name: Remove this workflow after a successful build (optional token)
