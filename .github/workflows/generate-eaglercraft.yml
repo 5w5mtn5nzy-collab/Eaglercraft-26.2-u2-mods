@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: write
-  workflows: write
 
 concurrency:
   group: eaglercraft-workspace-main
@@ -123,7 +122,7 @@ jobs:
         if: success()
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.WORKFLOW_CLEANUP_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
