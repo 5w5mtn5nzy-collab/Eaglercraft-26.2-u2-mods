@@ -1,0 +1,132 @@
+name: Generate Eaglercraft 26.2 u2 workspace
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-eaglercraft.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eaglercraft-workspace-main
+  cancel-in-progress: false
+
+jobs:
+  generate-workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip jq curl
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Download and verify the u2 setup kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="${RUNNER_TEMP}/eaglercraft-setup"
+          mkdir -p "$WORK/kit"
+          curl --fail --location --retry 3 --retry-all-errors \
+            "https://eaglercraft-26-2-u1-cdn.u2471966200.workers.dev/Eaglercraft-26.2-u2-Setup.jar" \
+            --output "$WORK/Eaglercraft-26.2-u2-Setup.jar"
+          unzip -p "$WORK/Eaglercraft-26.2-u2-Setup.jar" portable-kit.zip > "$WORK/portable-kit.zip"
+          unzip -p "$WORK/Eaglercraft-26.2-u2-Setup.jar" portable-kit.sha256 > "$WORK/expected-kit.sha256"
+          EXPECTED="$(tr -d '[:space:]' < "$WORK/expected-kit.sha256")"
+          ACTUAL="$(sha256sum "$WORK/portable-kit.zip" | cut -d ' ' -f 1)"
+          test -n "$EXPECTED"
+          test "$EXPECTED" = "$ACTUAL"
+          unzip -q "$WORK/portable-kit.zip" -d "$WORK/kit"
+          cd "$WORK/kit"
+          sha256sum -c SHA256SUMS
+          echo "KIT_DIR=$WORK/kit" >> "$GITHUB_ENV"
+
+      - name: Download the official Minecraft 26.2 client JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="${RUNNER_TEMP}/eaglercraft-setup"
+          MANIFEST="$WORK/version-manifest.json"
+          curl --fail --location --retry 3 --retry-all-errors \
+            https://piston-meta.mojang.com/mc/game/version_manifest_v2.json \
+            --output "$MANIFEST"
+          VERSION_URL="$(jq -er '[.versions[] | select(.id == "26.2")][0].url' "$MANIFEST")"
+          curl --fail --location --retry 3 --retry-all-errors "$VERSION_URL" --output "$WORK/minecraft-version.json"
+          CLIENT_URL="$(jq -er '.downloads.client.url' "$WORK/minecraft-version.json")"
+          CLIENT_SHA1="$(jq -er '.downloads.client.sha1' "$WORK/minecraft-version.json")"
+          curl --fail --location --retry 3 --retry-all-errors "$CLIENT_URL" --output "$WORK/minecraft-26.2-client.jar"
+          printf '%s  %s\n' "$CLIENT_SHA1" "$WORK/minecraft-26.2-client.jar" | sha1sum --check -
+          echo "MC_CLIENT_JAR=$WORK/minecraft-26.2-client.jar" >> "$GITHUB_ENV"
+
+      - name: Generate the source workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          KIT="$KIT_DIR"
+          OUT="workspace/Eaglercraft-26.2-u2"
+          test ! -e "$OUT"
+          mkdir -p workspace
+          java -jar "$KIT/eaglercraft-26.2-java-cli.jar" create-dev \
+            --jar "$MC_CLIENT_JAR" \
+            --output "$OUT" \
+            --vineflower "$KIT/inputs/vineflower-1.12.0.jar" \
+            --java17 "$(command -v java)" \
+            --patch-bundle "$KIT/source-patch-bundle.zip" \
+            --expected-bundle-sha256 "a8433093e9967ab1894ab55c9ffc967d548c23a93921be5aa18b4d539ca595af" \
+            --project-skeleton "$KIT/project-skeleton-v5-teavm-runtime-verified.zip" \
+            --expected-skeleton-sha256 "336ea8ef0487fdbab06512070cf2283999f86d0c35037d310b83250ad9f5f9c5" \
+            --resource-overlay "$KIT/inputs/resource-overlay-normal.zip" \
+            --expected-resource-overlay-sha256 "2ba7e3376891c64f8bf57f3687e05b8dbe1971a75475b6825449e5e5f96d71f3" \
+            --external-resource-root "$KIT/inputs/resources"
+          test -d "$OUT"
+          test -n "$(find "$OUT" -type f -print -quit)"
+          if find "$OUT" -type f -size +95M -print -quit | grep -q .; then
+            echo "Generated workspace contains an individual file too large for a normal GitHub push." >&2
+            exit 1
+          fi
+          du -sh "$OUT"
+
+      - name: Commit generated workspace to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workspace/Eaglercraft-26.2-u2
+          if git diff --cached --quiet; then
+            echo "No workspace changes to commit."
+            exit 0
+          fi
+          git commit -m "Generate Eaglercraft 26.2 u2 workspace"
+          git push origin HEAD:main
+
+      - name: Remove this workflow after a successful build (optional token)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.WORKFLOW_CLEANUP_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::warning::Workspace generation succeeded, but automatic self-deletion needs the WORKFLOW_CLEANUP_TOKEN repository secret (a fine-grained or classic PAT authorized to update/delete workflow files). The workflow was left in place."
+            exit 0
+          fi
+          FILE_SHA="$(gh api "repos/$GITHUB_REPOSITORY/contents/.github/workflows/generate-eaglercraft.yml?ref=main" --jq .sha)"
+          gh api --method DELETE "repos/$GITHUB_REPOSITORY/contents/.github/workflows/generate-eaglercraft.yml" \
+            -f message="Remove one-time workspace generator after successful build" \
+            -f sha="$FILE_SHA" \
+            -f branch="main"
