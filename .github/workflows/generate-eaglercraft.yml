@@ -6,9 +6,12 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/generate-eaglercraft.yml"
+  schedule:
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: write
+  workflows: write
 
 concurrency:
   group: eaglercraft-workspace-main
@@ -116,8 +119,9 @@ jobs:
 
       - name: Remove this workflow after a successful build (optional token)
         if: success()
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.WORKFLOW_CLEANUP_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
