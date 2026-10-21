@@ -1,5 +1,8 @@
 package com.terraformersmc.modmenu.util.mod.fabric;
 
+import net.fabricmc.loader.api.metadata.CustomValue;
+import net.fabricmc.loader.api.metadata.ModMetadata;
+
 import java.util.*;
 
 public class CustomValueUtil {

@@ -2,6 +2,7 @@ package com.terraformersmc.modmenu.util.mod.fabric;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.terraformersmc.modmenu.ModMenu;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.Validate;
