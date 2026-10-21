@@ -17,7 +17,6 @@ on:
       - 'platform/**'
       - 'platform-lwjgl/**'
       - 'platform-teavm/**'
-      - 'platform-teavm/**'
       - 'target_lwjgl_desktop/**'
       - 'target_teavm/**'
       - 'target_teavm_wasm_gc/**'
