@@ -2,17 +2,13 @@ plugins {
 	id("java")
 }
 
-// Mod Menu requires Fabric Loader/API and Quilt APIs, which this Eaglercraft
-// build does not provide. Keep its source files in the repository but exclude
-// them from this non-Fabric game compilation.
-sourceSets {
-	named("main") {
-		java.exclude("com/terraformersmc/modmenu/**")
-	}
-}
-
 dependencies {
 	implementation(project(":platform"))
+
+	// Compile Mod Menu against the matching Minecraft 26.2 Fabric APIs.
+	compileOnly("net.fabricmc:fabric-loader:0.20.1")
+	compileOnly("net.fabricmc.fabric-api:fabric-api:0.161.0+26.2")
+	compileOnly("eu.pb4:placeholder-api:3.1.0-beta.1+26.2")
 
 	// Vanilla 26.2 dependency set, generated from the official version JSON
 	// (https://piston-meta.mojang.com/v1/packages/73300f962b1d9c183957806be67850b740d3c949/26.2.json)
