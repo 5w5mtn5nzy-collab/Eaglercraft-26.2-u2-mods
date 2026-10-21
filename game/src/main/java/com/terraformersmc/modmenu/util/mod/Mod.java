@@ -4,6 +4,7 @@ import com.terraformersmc.modmenu.ModMenu;
 import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
+import net.fabricmc.loader.api.metadata.ContactInformation;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricIconHandler;
 import net.minecraft.locale.Language;
 import org.jetbrains.annotations.NotNull;
