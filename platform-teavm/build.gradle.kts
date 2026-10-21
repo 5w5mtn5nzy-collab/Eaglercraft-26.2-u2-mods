@@ -18,10 +18,13 @@ dependencies {
 	// its transitive libs do NOT leak onto this module's COMPILE classpath — the
 	// handful the blaze3d interface signatures reference (lwjgl PointerBuffer /
 	// Vk* in RenderPass(Backend), joml Vector4fc in CommandEncoderBackend, jspecify
-	// @Nullable) are added compileOnly below. They are still present on
-	// :target_teavm's runtime classpath transitively via :game, so TeaVM
-	// generateJavaScript resolves them for any reachable method.
+	// @Nullable) are added compileOnly below. They are still present on :target_teavm's
+	// runtime classpath transitively via :game, so TeaVM generateJavaScript resolves
+	// them for any reachable method.
 	implementation(project(":game"))
+	// The browser-specific Mod Menu replacements retain the shared Fabric Loader
+	// API descriptors but never invoke a live loader instance.
+	compileOnly("net.fabricmc:fabric-loader:0.20.1")
 	// Phase 3.3b: org.lwjgl.* is provided by THIS module's linkage stubs
 	// (src/main/java/org/lwjgl/**) — real LWJGL jars must NOT be on this compile
 	// classpath or javac could prefer the jar classes over the stub sources.
