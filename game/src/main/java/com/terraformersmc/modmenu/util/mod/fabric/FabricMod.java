@@ -169,7 +169,7 @@ public class FabricMod implements Mod {
         }
     }
 
-    public @NotNull ModContainer getContainer() {
+    public @Nullable ModContainer getContainer() {
         return container;
     }
 
