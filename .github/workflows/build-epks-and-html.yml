@@ -6,6 +6,8 @@ on:
     branches: [ main ]
     paths:
       - 'game/src/main/resources/**'
+      - 'game/src/main/java/**'
+      - 'game/build.gradle.kts'
       - 'platform/**'
       - 'platform-lwjgl/**'
       - 'target_lwjgl_desktop/**'
