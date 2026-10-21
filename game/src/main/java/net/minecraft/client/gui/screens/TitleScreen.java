@@ -1,5 +1,11 @@
 package net.minecraft.client.gui.screens;
 
+import com.terraformersmc.modmenu.ModMenu;
+import com.terraformersmc.modmenu.api.ModMenuApi;
+import com.terraformersmc.modmenu.config.ModMenuConfig;
+import com.terraformersmc.modmenu.gui.ModsScreen;
+import com.terraformersmc.modmenu.gui.widget.SmallModMenuButtonWidget;
+
 import com.mojang.authlib.minecraft.BanDetails;
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
@@ -14,6 +20,7 @@ import net.minecraft.client.gui.components.PlainTextButton;
 import net.minecraft.client.gui.components.SplashRenderer;
 import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.multiplayer.SafetyScreen;
@@ -93,6 +100,9 @@ public class TitleScreen extends Screen {
       int topPos = this.height / 4 + 48;
       boolean liteMode = net.lax1dude.eaglercraft.v1_8.minecraft.EaglerHosted.liteModeEnabled;
       boolean demoMode = !liteMode && this.minecraft.isDemo();
+      boolean modifyModMenu = ModMenuConfig.MODIFY_TITLE_SCREEN.getValue();
+      boolean modMenuIcon = modifyModMenu && ModMenuConfig.MODS_BUTTON_STYLE.getValue() == ModMenuConfig.TitleMenuButtonStyle.ICON;
+      boolean modMenuText = modifyModMenu && ModMenuConfig.MODS_BUTTON_STYLE.getValue() != ModMenuConfig.TitleMenuButtonStyle.ICON;
       if (demoMode) {
          topPos = this.createDemoMenuOptions(topPos, 24);
       } else {
