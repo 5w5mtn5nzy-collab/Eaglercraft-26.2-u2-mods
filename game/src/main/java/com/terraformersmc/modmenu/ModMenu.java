@@ -19,8 +19,10 @@ import com.terraformersmc.modmenu.util.UpdateCheckerUtil;
 import com.terraformersmc.modmenu.util.mod.Mod;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricDummyParentMod;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricMod;
-import com.terraformersmc.modmenu.util.mod.quilt.QuiltMod;
+import net.lax1dude.eaglercraft.v1_8.mods.resources.EaglerModResourcePackSource;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.screens.Screen;
+import net.lax1dude.eaglercraft.v1_8.EaglercraftVersion;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -32,9 +34,10 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ModMenu implements ClientModInitializer {
+public class ModMenu {
     public static final String MOD_ID = "modmenu";
     public static final String GITHUB_REF = "TerraformersMC/ModMenu";
+    public static final String VERSION = "12.0.0";
     public static final Logger LOGGER = LoggerFactory.getLogger("Mod Menu");
     public static final Gson GSON;
     public static final Gson GSON_MINIFIED;
@@ -53,9 +56,10 @@ public class ModMenu implements ClientModInitializer {
     private static final List<ModMenuApi> apiImplementations = new ArrayList<>();
 
     private static int cachedDisplayedModCount = -1;
-    public static final boolean RUNNING_QUILT = FabricLoader.getInstance().isModLoaded("quilt_loader");
-    public static final boolean DEV_ENVIRONMENT = FabricLoader.getInstance().isDevelopmentEnvironment();
-    public static final boolean TEXT_PLACEHOLDER_COMPAT = FabricLoader.getInstance().isModLoaded("placeholder-api");
+    private static boolean initialized;
+    public static final boolean RUNNING_QUILT = false;
+    public static final boolean DEV_ENVIRONMENT = false;
+    public static final boolean TEXT_PLACEHOLDER_COMPAT = false;
 
     public static boolean hasConfigScreen(String modId) {
         return getConfigScreenFactory(modId) != null;
@@ -85,44 +89,39 @@ public class ModMenu implements ClientModInitializer {
         return configScreenFactories.get(modId);
     }
 
-    @Override
-    public void onInitializeClient() {
+    public static synchronized void ensureInitialized() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        try {
+            new ModMenu().init();
+        } catch (Throwable t) {
+            LOGGER.error("Failed to initialize the Mod Menu", t);
+        }
+    }
+
+    public void init() {
         ModMenuConfigManager.initializeConfig();
         Set<String> modpackMods = new HashSet<>();
         Map<String, UpdateChecker> updateCheckers = new HashMap<>();
         Map<String, UpdateChecker> providedUpdateCheckers = new HashMap<>();
 
-        // Ignore deprecations, they're from Quilt Loader being in the dev env
-        //noinspection deprecation
-        FabricLoader.getInstance().getEntrypointContainers("modmenu", ModMenuApi.class).forEach(entrypoint -> {
-            //noinspection deprecation
-            ModMetadata metadata = entrypoint.getProvider().getMetadata();
-            String modId = metadata.getId();
-            try {
-                ModMenuApi api = entrypoint.getEntrypoint();
-                ConfigScreenFactory<?> factory = api.getModConfigScreenFactory();
-                if (!(factory instanceof NullScreenFactory<?>)) {
-                    configScreenFactories.put(modId, factory);
-                }
-                apiImplementations.add(api);
-                updateCheckers.put(modId, api.getUpdateChecker());
-                providedUpdateCheckers.putAll(api.getProvidedUpdateCheckers());
-                api.attachModpackBadges(modpackMods::add);
-            } catch (Throwable e) {
-                LOGGER.error("Mod {} provides a broken implementation of ModMenuApi", modId, e);
-            }
-        });
+        MODS.clear();
+        ROOT_MODS.clear();
+        PARENT_MAP.clear();
+        configScreenFactories.clear();
+        apiImplementations.clear();
 
-        // Fill mods map
-        //noinspection deprecation
-        for (ModContainer modContainer : FabricLoader.getInstance().getAllMods()) {
-            Mod mod;
-            if (RUNNING_QUILT) {
-                mod = new QuiltMod(modContainer, modpackMods);
-            } else {
-                mod = new FabricMod(modContainer, modpackMods);
-            }
+        try {
+            ModMenuApi api = new ModMenuModMenuCompat();
+            apiImplementations.add(api);
+            providedUpdateCheckers.putAll(api.getProvidedUpdateCheckers());
+        } catch (Throwable t) {
+            LOGGER.error("Failed to register the built-in ModMenuApi implementation", t);
+        }
 
+        for (Mod mod : collectMods()) {
             var updateChecker = updateCheckers.get(mod.getId());
             if (updateChecker == null) {
                 updateChecker = providedUpdateCheckers.get(mod.getId());
@@ -136,7 +135,6 @@ public class ModMenu implements ClientModInitializer {
 
         Map<String, Mod> dummyParents = new HashMap<>();
 
-        // Initialize parent map
         HashSet<String> modParentSet = new HashSet<>();
         for (Mod mod : MODS.values()) {
             String parentId = mod.getParent();
@@ -158,7 +156,6 @@ public class ModMenu implements ClientModInitializer {
 
                 parentId = parent != null ? parent.getParent() : null;
                 if (parentId == null) {
-                    // It will most likely end here in the first iteration
                     break;
                 }
 
@@ -181,6 +178,38 @@ public class ModMenu implements ClientModInitializer {
 
         MODS.putAll(dummyParents);
         ModMenuEventHandler.register();
+    }
+
+    private static List<Mod> collectMods() {
+        List<Mod> result = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        Set<Mod.Badge> minecraftBadges = EnumSet.of(Mod.Badge.MINECRAFT);
+        result.add(new FabricMod("minecraft", "Minecraft", "The base game", SharedConstants.getCurrentVersion().name(), List.of("Mojang Studios"), minecraftBadges));
+        seen.add("minecraft");
+
+        Set<Mod.Badge> javaBadges = EnumSet.of(Mod.Badge.LIBRARY);
+        result.add(new FabricMod("java", "Java", "Java Runtime Environment", System.getProperty("java.version", "unknown"), List.of(), javaBadges));
+        seen.add("java");
+
+        Set<Mod.Badge> eaglerBadges = EnumSet.of(Mod.Badge.CLIENT);
+        result.add(new FabricMod("eaglercraft", "Eaglercraft", "A Minecraft 1.8.8 client that runs in the browser", EaglercraftVersion.projectForkVersion, List.of("Eaglercraft contributors"), eaglerBadges));
+        seen.add("eaglercraft");
+
+        Set<Mod.Badge> modMenuBadges = EnumSet.of(Mod.Badge.CLIENT);
+        result.add(new FabricMod(MOD_ID, "Mod Menu", "Adds a mod list to the game", VERSION, List.of("TerraformersMC"), modMenuBadges));
+        seen.add(MOD_ID);
+
+        for (String moduleId : EaglerModResourcePackSource.mountedModuleIds()) {
+            if (!seen.add(moduleId)) {
+                continue;
+            }
+
+            Set<Mod.Badge> badges = EnumSet.of(Mod.Badge.CLIENT);
+            result.add(new FabricMod(moduleId, moduleId, "Eaglercraft module", "unknown", List.of(), badges));
+        }
+
+        return result;
     }
 
     public static void clearModCountCache() {
@@ -206,7 +235,7 @@ public class ModMenu implements ClientModInitializer {
             }
 
             if (mod.hasUpdate() || mod.getChildHasUpdate()) {
-                return true; // At least one currently visible mod has an update
+                return true;
             }
         }
 
@@ -219,7 +248,6 @@ public class ModMenu implements ClientModInitializer {
             boolean includeLibraries = ModMenuConfig.COUNT_LIBRARIES.getValue();
             boolean includeHidden = ModMenuConfig.COUNT_HIDDEN_MODS.getValue();
 
-            // listen, if you have >= 2^32 mods then that's on you
             cachedDisplayedModCount = Math.toIntExact(MODS.values().stream().filter(mod -> {
                 boolean isChild = mod.getParent() != null;
                 if (!includeChildren && isChild) {
