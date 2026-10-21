@@ -2,6 +2,9 @@ subprojects {
 	apply(plugin = "java")
 
 	repositories {
+		maven("https://maven.fabricmc.net/")
+		maven("https://maven.nucleoid.xyz/")
+		maven("https://api.modrinth.com/maven")
 		maven("https://libraries.minecraft.net")
 		mavenCentral()
 	}
