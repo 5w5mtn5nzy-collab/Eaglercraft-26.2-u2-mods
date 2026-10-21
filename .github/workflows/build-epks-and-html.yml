@@ -92,7 +92,7 @@ jobs:
           mkdir -p output
           find . -name "classes.js" -o -name "assets.epk" -o -name "eaglercraft*.html" -o -name "index.html" | head -40
           # Copy common TeaVM outputs
-          find target_teavm/build -type f -name "classes.js" -exec cp -v {} output/ \\;
+          find target_teavm/build -type f -name "classes.js" -exec cp -v {} output/ \;
           cp -v target_teavm/src/web/index.html output/
           cp -v target_teavm/build/epk/*.epk output/ 2>/dev/null || true
           cp -v target_lwjgl_desktop/build/epk/*.epk output/ 2>/dev/null || true
