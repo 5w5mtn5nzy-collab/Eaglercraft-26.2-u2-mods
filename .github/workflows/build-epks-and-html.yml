@@ -71,7 +71,7 @@ jobs:
             target_teavm_wasm_gc/build
             target_teavm_wasm_gc_mesh/build
             target_teavm_wasm_gc_server/build
-          key: eagler-build-${{ runner.os }}-jdk25-${{ hashFiles('**/*.java', '**/*.kt', '**/*.kts', '**/src/main/resources/**', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'wasm-toolchain/**') }}
+          key: eagler-build-${{ runner.os }}-jdk25-${{ hashFiles('**/src/**/*.java', '**/src/**/*.kt', '**/*.gradle.kts', '**/src/main/resources/**', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'wasm-toolchain/**') }}
           restore-keys: |
             eagler-build-${{ runner.os }}-jdk25-
 
