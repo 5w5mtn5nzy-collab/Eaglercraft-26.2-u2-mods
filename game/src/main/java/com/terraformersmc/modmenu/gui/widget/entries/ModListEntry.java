@@ -7,6 +7,7 @@ import com.terraformersmc.modmenu.gui.widget.ModListWidget;
 import com.terraformersmc.modmenu.gui.widget.UpdateAvailableBadge;
 import com.terraformersmc.modmenu.util.DrawingUtil;
 import com.terraformersmc.modmenu.util.mod.Mod;
+import com.terraformersmc.modmenu.util.mod.fabric.FabricMod;
 import com.terraformersmc.modmenu.util.mod.ModBadgeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -205,6 +206,9 @@ public class ModListEntry extends ObjectSelectionList.Entry<ModListEntry> {
     }
 
     public Identifier getIconTexture() {
+        if (mod instanceof FabricMod fabricMod && fabricMod.getContainer() == null) {
+            return UNKNOWN_ICON;
+        }
         if (this.iconLocation == null) {
             this.iconLocation = Identifier.fromNamespaceAndPath(ModMenu.MOD_ID, mod.getId() + "_icon");
             DynamicTexture icon = mod.getIcon(list.getFabricIconHandler(), 64 * this.client.options.guiScale().get());
