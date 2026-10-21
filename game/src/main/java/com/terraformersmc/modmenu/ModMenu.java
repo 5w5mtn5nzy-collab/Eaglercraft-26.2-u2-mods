@@ -20,11 +20,10 @@ import com.terraformersmc.modmenu.util.mod.Mod;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricDummyParentMod;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricMod;
 import com.terraformersmc.modmenu.util.mod.quilt.QuiltMod;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.lax1dude.eaglercraft.v1_8.mods.resources.EaglerModResourcePackSource;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.screens.Screen;
+import net.lax1dude.eaglercraft.v1_8.EaglercraftVersion;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -36,7 +35,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ModMenu implements ClientModInitializer {
+public class ModMenu  {
     public static final String MOD_ID = "modmenu";
     public static final String GITHUB_REF = "TerraformersMC/ModMenu";
     public static final Logger LOGGER = LoggerFactory.getLogger("Mod Menu");
@@ -57,9 +56,22 @@ public class ModMenu implements ClientModInitializer {
     private static final List<ModMenuApi> apiImplementations = new ArrayList<>();
 
     private static int cachedDisplayedModCount = -1;
-    public static final boolean RUNNING_QUILT = FabricLoader.getInstance().isModLoaded("quilt_loader");
-    public static final boolean DEV_ENVIRONMENT = FabricLoader.getInstance().isDevelopmentEnvironment();
-    public static final boolean TEXT_PLACEHOLDER_COMPAT = FabricLoader.getInstance().isModLoaded("placeholder-api");
+    private static boolean initialized;
+
+    public static synchronized void ensureInitialized() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+        try {
+            new ModMenu().init();
+        } catch (Throwable t) {
+            LOGGER.error("Failed to initialize the Mod Menu", t);
+        }
+    }
+    public static final boolean RUNNING_QUILT = null.isModLoaded("quilt_loader");
+    public static final boolean DEV_ENVIRONMENT = null.isDevelopmentEnvironment();
+    public static final boolean TEXT_PLACEHOLDER_COMPAT = null.isModLoaded("placeholder-api");
 
     public static boolean hasConfigScreen(String modId) {
         return getConfigScreenFactory(modId) != null;
@@ -98,9 +110,9 @@ public class ModMenu implements ClientModInitializer {
 
         // Ignore deprecations, they're from Quilt Loader being in the dev env
         //noinspection deprecation
-        FabricLoader.getInstance().getEntrypointContainers("modmenu", ModMenuApi.class).forEach(entrypoint -> {
+        null.getEntrypointContainers("modmenu", ModMenuApi.class).forEach(entrypoint -> {
             //noinspection deprecation
-            ModMetadata metadata = entrypoint.getProvider().getMetadata();
+            Object metadata = entrypoint.getProvider().getMetadata();
             String modId = metadata.getId();
             try {
                 ModMenuApi api = entrypoint.getEntrypoint();
@@ -119,7 +131,7 @@ public class ModMenu implements ClientModInitializer {
 
         // Fill mods map
         //noinspection deprecation
-        for (ModContainer modContainer : FabricLoader.getInstance().getAllMods()) {
+        for (Object modContainer : null.getAllMods()) {
             Mod mod;
             if (RUNNING_QUILT) {
                 mod = new QuiltMod(modContainer, modpackMods);
@@ -185,6 +197,39 @@ public class ModMenu implements ClientModInitializer {
 
         MODS.putAll(dummyParents);
         ModMenuEventHandler.register();
+    }
+
+
+    private static List<Mod> collectMods() {
+        List<Mod> result = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        Set<Mod.Badge> minecraftBadges = EnumSet.of(Mod.Badge.MINECRAFT);
+        result.add(new FabricMod("minecraft", "Minecraft", "The base game", SharedConstants.getCurrentVersion().name(), List.of("Mojang Studios"), minecraftBadges));
+        seen.add("minecraft");
+
+        Set<Mod.Badge> javaBadges = EnumSet.of(Mod.Badge.LIBRARY);
+        result.add(new FabricMod("java", "Java", "Java Runtime Environment", System.getProperty("java.version", "unknown"), List.of(), javaBadges));
+        seen.add("java");
+
+        Set<Mod.Badge> eaglerBadges = EnumSet.of(Mod.Badge.CLIENT);
+        result.add(new FabricMod("eaglercraft", "Eaglercraft", "A Minecraft 1.8.8 client that runs in the browser", EaglercraftVersion.projectForkVersion, List.of("Eaglercraft contributors"), eaglerBadges));
+        seen.add("eaglercraft");
+
+        Set<Mod.Badge> modMenuBadges = EnumSet.of(Mod.Badge.CLIENT);
+        result.add(new FabricMod(MOD_ID, "Mod Menu", "Adds a mod list to the game", VERSION, List.of("TerraformersMC"), modMenuBadges));
+        seen.add(MOD_ID);
+
+        for (String moduleId : EaglerModResourcePackSource.mountedModuleIds()) {
+            if (!seen.add(moduleId)) {
+                continue;
+            }
+
+            Set<Mod.Badge> badges = EnumSet.of(Mod.Badge.CLIENT);
+            result.add(new FabricMod(moduleId, moduleId, "Eaglercraft module", "unknown", List.of(), badges));
+        }
+
+        return result;
     }
 
     public static void clearModCountCache() {

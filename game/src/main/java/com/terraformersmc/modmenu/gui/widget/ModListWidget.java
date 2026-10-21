@@ -293,7 +293,7 @@ public class ModListWidget extends ObjectSelectionList<ModListEntry> implements 
     }
 
     /**
-     * Version of {@link #drawSelectionHighlight(GuiGraphicsExtractor, int, int, int, int, int, int)} with unconstrained positioning and sizing.
+     * String of {@link #drawSelectionHighlight(GuiGraphicsExtractor, int, int, int, int, int, int)} with unconstrained positioning and sizing.
      */
     protected void drawSelectionHighlight(GuiGraphicsExtractor context, int x, int y, int width, int height, int borderColor, int fillColor) {
         context.fill(x, y - 2, x + width, y + height + 2, borderColor);

@@ -25,7 +25,7 @@ public class ModMenuModMenuCompat implements ModMenuApi {
 
     @Override
     public Map<String, UpdateChecker> getProvidedUpdateCheckers() {
-        if (ModMenu.RUNNING_QUILT) {
+        if (false) {
             return Map.of("quilt_loader", new QuiltLoaderUpdateChecker());
         } else {
             return Map.of("fabricloader", new FabricLoaderUpdateChecker());

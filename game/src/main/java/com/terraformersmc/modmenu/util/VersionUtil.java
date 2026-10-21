@@ -2,10 +2,10 @@ package com.terraformersmc.modmenu.util;
 
 import java.util.List;
 
-public final class VersionUtil {
+public final class StringUtil {
     private static final List<String> PREFIXES = List.of("version", "ver", "v");
 
-    private VersionUtil() {
+    private StringUtil() {
     }
 
     public static String stripPrefix(String version) {
@@ -20,7 +20,7 @@ public final class VersionUtil {
         return version;
     }
 
-    public static String getPrefixedVersion(String version) {
+    public static String getPrefixedString(String version) {
         return "v" + stripPrefix(version);
     }
 

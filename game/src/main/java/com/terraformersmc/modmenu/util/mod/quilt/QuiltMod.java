@@ -6,10 +6,6 @@ import com.terraformersmc.modmenu.util.UpdateCheckerUtil;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricMod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.loader.api.ModContributor;
-import org.quiltmc.loader.api.ModMetadata;
-import org.quiltmc.loader.api.QuiltLoader;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -19,12 +15,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class QuiltMod extends FabricMod {
-    protected final ModContainer container;
-    protected final ModMetadata metadata;
+    protected final Object container;
+    protected final Object metadata;
 
-    public QuiltMod(net.fabricmc.loader.api.ModContainer fabricModContainer, Set<String> modpackMods) {
-        super(fabricModContainer, modpackMods);
-        this.container = QuiltLoader.getModContainer(fabricModContainer.getMetadata().getId()).get();
+    public QuiltMod(Object fabricObject, Set<String> modpackMods) {
+        super(fabricObject, modpackMods);
+        this.container = QuiltLoader.getObject(fabricObject.getMetadata().getId()).get();
         this.metadata = container.metadata();
         if ("quilt_loader".equals(metadata.id())) {
             badges.add(Badge.LIBRARY);
@@ -36,7 +32,7 @@ public class QuiltMod extends FabricMod {
         List<String> authors = metadata.contributors()
                 .stream()
                 .filter(contributor -> contributor.role().equals("Author") || contributor.role().equals("Owner"))
-                .map(ModContributor::name)
+                .map(Object::name)
                 .collect(Collectors.toList());
         if (authors.isEmpty()) {
             metadata.contributors()
@@ -88,8 +84,8 @@ public class QuiltMod extends FabricMod {
         var fabricResult = super.getSha512Hash();
         if (fabricResult == null) {
             UpdateCheckerUtil.LOGGER.debug("Checking {}", getId());
-            if (container.getSourceType().equals(ModContainer.BasicSourceType.NORMAL_QUILT) || container.getSourceType()
-                    .equals(ModContainer.BasicSourceType.NORMAL_FABRIC)) {
+            if (container.getSourceType().equals(Object.BasicSourceType.NORMAL_QUILT) || container.getSourceType()
+                    .equals(Object.BasicSourceType.NORMAL_FABRIC)) {
                 for (var paths : container.getSourcePaths()) {
                     List<Path> jars = paths.stream()
                             .filter(p -> p.toString().toLowerCase(Locale.ROOT).endsWith(".jar"))

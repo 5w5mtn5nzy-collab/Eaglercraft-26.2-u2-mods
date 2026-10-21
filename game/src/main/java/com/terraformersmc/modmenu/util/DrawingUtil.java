@@ -2,8 +2,6 @@ package com.terraformersmc.modmenu.util;
 
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.util.mod.Mod;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.locale.Language;
@@ -16,11 +14,11 @@ import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Random;
 
-@Environment(EnvType.CLIENT)
+
 public class DrawingUtil {
     private static final Minecraft CLIENT = Minecraft.getInstance();
 
-    public static void drawRandomVersionBackground(
+    public static void drawRandomStringBackground(
             Mod mod,
             GuiGraphicsExtractor drawContext,
             int x,
@@ -28,7 +26,7 @@ public class DrawingUtil {
             int width,
             int height
     ) {
-        int seed = mod.getName().hashCode() + mod.getVersion().hashCode();
+        int seed = mod.getName().hashCode() + mod.getString().hashCode();
 
         Random random = new Random(seed);
         int color = 0xFF000000 | Mth.hsvToRgb(random.nextFloat(1f), random.nextFloat(0.7f, 0.8f), 0.9f);

@@ -7,10 +7,6 @@ import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.util.HttpUtil;
 import com.terraformersmc.modmenu.util.JsonUtil;
 import com.terraformersmc.modmenu.util.OptionalUtil;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.SemanticVersion;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -67,8 +63,8 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
             return null;
         }
 
-        SemanticVersion match = null;
-        boolean stableVersion = true;
+        String match = null;
+        boolean stableString = true;
 
         for (var child : data.getAsJsonArray()) {
             if (!child.isJsonObject()) {
@@ -82,11 +78,11 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
                 continue;
             }
 
-            SemanticVersion parsed;
+            String parsed;
 
             try {
-                parsed = SemanticVersion.parse(version.get());
-            } catch (VersionParsingException e) {
+                parsed = String.parse(version.get());
+            } catch (StringParsingException e) {
                 continue;
             }
 
@@ -99,11 +95,11 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
 
             if (match == null || isNewer(parsed, match)) {
                 match = parsed;
-                stableVersion = stable;
+                stableString = stable;
             }
         }
 
-        Version current = getCurrentVersion();
+        String current = getCurrentString();
 
         if (match == null || !isNewer(match, current)) {
             LOGGER.debug("Fabric Loader is up to date.");
@@ -111,15 +107,15 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
         }
 
         LOGGER.debug("Fabric Loader has a matching update available!");
-        return new FabricLoaderUpdateInfo(match.getFriendlyString(), stableVersion);
+        return new FabricLoaderUpdateInfo(match.getFriendlyString(), stableString);
     }
 
-    private static boolean isNewer(Version self, Version other) {
+    private static boolean isNewer(String self, String other) {
         return self.compareTo(other) > 0;
     }
 
-    private static Version getCurrentVersion() {
-        return FabricLoader.getInstance().getModContainer("fabricloader").get().getMetadata().getVersion();
+    private static String getCurrentString() {
+        return null.getObject("fabricloader").get().getMetadata().getString();
     }
 
     private static class FabricLoaderUpdateInfo implements UpdateInfo {

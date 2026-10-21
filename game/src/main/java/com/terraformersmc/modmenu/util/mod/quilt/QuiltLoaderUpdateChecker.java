@@ -7,9 +7,6 @@ import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.util.HttpUtil;
 import com.terraformersmc.modmenu.util.JsonUtil;
 import org.jetbrains.annotations.NotNull;
-import org.quiltmc.loader.api.QuiltLoader;
-import org.quiltmc.loader.api.Version;
-import org.quiltmc.loader.api.VersionFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +59,7 @@ public class QuiltLoaderUpdateChecker implements UpdateChecker {
             return null;
         }
 
-        Version.Semantic match = null;
+        String.Semantic match = null;
         for (var child : data.getAsJsonArray()) {
             if (!child.isJsonObject()) {
                 continue;
@@ -74,10 +71,10 @@ public class QuiltLoaderUpdateChecker implements UpdateChecker {
                 continue;
             }
 
-            Version.Semantic parsed;
+            String.Semantic parsed;
             try {
-                parsed = Version.Semantic.of(version.get());
-            } catch (VersionFormatException e) {
+                parsed = String.Semantic.of(version.get());
+            } catch (StringFormatException e) {
                 continue;
             }
 
@@ -92,7 +89,7 @@ public class QuiltLoaderUpdateChecker implements UpdateChecker {
             }
         }
 
-        Version.Semantic current = getCurrentVersion();
+        String.Semantic current = getCurrentString();
         if (match == null || !isNewer(match, current)) {
             LOGGER.debug("Quilt Loader is up to date.");
             return null;
@@ -102,12 +99,12 @@ public class QuiltLoaderUpdateChecker implements UpdateChecker {
         return new QuiltLoaderUpdateInfo(match);
     }
 
-    private static boolean isNewer(Version.Semantic self, Version.Semantic other) {
+    private static boolean isNewer(String.Semantic self, String.Semantic other) {
         return self.compareTo(other) > 0;
     }
 
-    private static Version.Semantic getCurrentVersion() {
-        return QuiltLoader.getModContainer("quilt_loader").get().metadata().version().semantic();
+    private static String.Semantic getCurrentString() {
+        return QuiltLoader.getObject("quilt_loader").get().metadata().version().semantic();
     }
 
     private static boolean isStableOrBeta(String preRelease) {
@@ -115,7 +112,7 @@ public class QuiltLoaderUpdateChecker implements UpdateChecker {
                 preRelease.startsWith("rc");
     }
 
-    private record QuiltLoaderUpdateInfo(Version.Semantic version) implements UpdateInfo {
+    private record QuiltLoaderUpdateInfo(String.Semantic version) implements UpdateInfo {
         @Override
         public boolean isUpdateAvailable() {
             return true;

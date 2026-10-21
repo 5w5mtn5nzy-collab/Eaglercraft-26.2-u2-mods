@@ -2,7 +2,6 @@ package com.terraformersmc.modmenu.util.mod.fabric;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.terraformersmc.modmenu.ModMenu;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.Validate;
@@ -22,7 +21,7 @@ public class FabricIconHandler implements Closeable {
 
     private final Map<Path, DynamicTexture> modIconCache = new HashMap<>();
 
-    public DynamicTexture createIcon(ModContainer iconSource, String iconPath) {
+    public DynamicTexture createIcon(Object iconSource, String iconPath) {
         try {
             Path path = iconSource.getPath(iconPath);
             DynamicTexture cachedIcon = getCachedModIcon(path);

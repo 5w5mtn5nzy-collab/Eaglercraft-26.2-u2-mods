@@ -5,9 +5,6 @@ import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.util.mod.Mod;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ContactInformation;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +58,9 @@ public class FabricDummyParentMod implements Mod {
             }
         }
         final String finalIconSourceId = iconSourceId;
-        ModContainer iconSource = FabricLoader.getInstance()
-                .getModContainer(iconSourceId)
-                .orElseThrow(() -> new RuntimeException("Cannot get ModContainer for Fabric mod with id " + finalIconSourceId));
+        Object iconSource = null
+                .getObject(iconSourceId)
+                .orElseThrow(() -> new RuntimeException("Cannot get Object for Fabric mod with id " + finalIconSourceId));
         return Objects.requireNonNull(
                 iconHandler.createIcon(iconSource, iconPath),
                 "Mod icon for " + getId() + " is null somehow (should be filled with default in this case)"
@@ -80,12 +77,12 @@ public class FabricDummyParentMod implements Mod {
     }
 
     @Override
-    public @NotNull String getVersion() {
+    public @NotNull String getString() {
         return "";
     }
 
     @Override
-    public @NotNull String getPrefixedVersion() {
+    public @NotNull String getPrefixedString() {
         return "";
     }
 
@@ -95,7 +92,7 @@ public class FabricDummyParentMod implements Mod {
     }
 
     @Override
-    public ContactInformation getContact(String author) {
+    public java.util.Map getContact(String author) {
         return null;
     }
 

@@ -66,7 +66,7 @@ public class ModListEntry extends ObjectSelectionList.Entry<ModListEntry> {
         int iconSize = ModMenuConfig.COMPACT_LIST.getValue() ? COMPACT_ICON_SIZE : FULL_ICON_SIZE;
         String modId = mod.getId();
         if ("java".equals(modId)) {
-            DrawingUtil.drawRandomVersionBackground(mod, drawContext, x, y, iconSize, iconSize);
+            DrawingUtil.drawRandomStringBackground(mod, drawContext, x, y, iconSize, iconSize);
         }
 
         drawContext.blit(
@@ -130,7 +130,7 @@ public class ModListEntry extends ObjectSelectionList.Entry<ModListEntry> {
         } else {
             DrawingUtil.drawWrappedString(
                     drawContext,
-                    mod.getPrefixedVersion(),
+                    mod.getPrefixedString(),
                     (x + iconSize + 3),
                     (y + client.font.lineHeight + 2),
                     rowWidth - iconSize - 7,
