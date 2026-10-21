@@ -1,5 +1,10 @@
 name: Build EPKs and HTML
 
+# A newer commit supersedes older builds; do not spend runner time compiling stale revisions.
+concurrency:
+  group: build-epks-and-html-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
@@ -41,7 +46,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'gradle'
+      - name: Set up Gradle build cache
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
