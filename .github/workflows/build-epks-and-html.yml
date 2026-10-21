@@ -49,6 +49,33 @@ jobs:
       - name: Set up Gradle build cache
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Prepare Gradle output cache directory
+        run: mkdir -p .gradle
+
+      # Restore prior task history and outputs. The exact key reuses a successful
+      # build for unchanged inputs; the fallback restores the prior build so Gradle
+      # can incrementally recompile only changed Java/resources.
+      - name: Restore previous Gradle outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            .gradle
+            game/build
+            platform/build
+            platform-lwjgl/build
+            platform-teavm/build
+            teavm-compat/build
+            target_lwjgl_desktop/build
+            target_teavm/build
+            target_teavm_spike/build
+            target_teavm_wasm_gc/build
+            target_teavm_wasm_gc_mesh/build
+            target_teavm_wasm_gc_server/build
+          key: eagler-build-${{ runner.os }}-jdk25-${{ hashFiles('**/*.java', '**/*.kt', '**/*.kts', '**/src/main/resources/**', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'wasm-toolchain/**') }}
+          restore-keys: |
+            eagler-build-${{ runner.os }}-jdk25-
+
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
