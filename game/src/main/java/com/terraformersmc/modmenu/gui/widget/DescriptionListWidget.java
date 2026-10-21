@@ -81,7 +81,7 @@ public class DescriptionListWidget extends AbstractSelectionList<DescriptionList
         if (selectedMod != null) {
             builder.add(
                     NarratedElementType.TITLE,
-                    selectedMod.getTranslatedName() + " " + selectedMod.getPrefixedString());
+                    selectedMod.getTranslatedName() + " " + selectedMod.getPrefixedVersion());
         }
     }
 
@@ -242,7 +242,7 @@ public class DescriptionListWidget extends AbstractSelectionList<DescriptionList
                             indent = 16;
 
                             for (var line : textRenderer.split(Component.literal(contributor), wrapWidth - 24)) {
-                                java.util.Map contact = mod.getContact(contributor);
+                                ContactInformation contact = mod.getContact(contributor);
                                 if (contact != null && contact.get("email").isPresent()) {
                                     this.addEntry(new MailableContactEntry(line, contact.get("email").get(), indent));
                                 } else {

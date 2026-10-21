@@ -63,8 +63,8 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
             return null;
         }
 
-        String match = null;
-        boolean stableString = true;
+        SemanticVersion match = null;
+        boolean stableVersion = true;
 
         for (var child : data.getAsJsonArray()) {
             if (!child.isJsonObject()) {
@@ -78,11 +78,11 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
                 continue;
             }
 
-            String parsed;
+            SemanticVersion parsed;
 
             try {
-                parsed = String.parse(version.get());
-            } catch (StringParsingException e) {
+                parsed = SemanticVersion.parse(version.get());
+            } catch (VersionParsingException e) {
                 continue;
             }
 
@@ -95,11 +95,11 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
 
             if (match == null || isNewer(parsed, match)) {
                 match = parsed;
-                stableString = stable;
+                stableVersion = stable;
             }
         }
 
-        String current = getCurrentString();
+        Version current = getCurrentVersion();
 
         if (match == null || !isNewer(match, current)) {
             LOGGER.debug("Fabric Loader is up to date.");
@@ -107,15 +107,15 @@ public class FabricLoaderUpdateChecker implements UpdateChecker {
         }
 
         LOGGER.debug("Fabric Loader has a matching update available!");
-        return new FabricLoaderUpdateInfo(match.getFriendlyString(), stableString);
+        return new FabricLoaderUpdateInfo(match.getFriendlyString(), stableVersion);
     }
 
-    private static boolean isNewer(String self, String other) {
+    private static boolean isNewer(Version self, Version other) {
         return self.compareTo(other) > 0;
     }
 
-    private static String getCurrentString() {
-        return null.getObject("fabricloader").get().getMetadata().getString();
+    private static Version getCurrentVersion() {
+        return FabricLoader.getInstance().getModContainer("fabricloader").get().getMetadata().getVersion();
     }
 
     private static class FabricLoaderUpdateInfo implements UpdateInfo {

@@ -52,11 +52,11 @@ public class UpdateCheckerUtil {
 
     private static void checkForUpdates0() {
         List<Mod> withoutUpdateChecker = new ArrayList<>();
-        Map<String, Instant> currentStrings = null;
-        Map<String, StringUpdate> updatedStrings = null;
+        Map<String, Instant> currentVersions = null;
+        Map<String, VersionUpdate> updatedVersions = null;
         Map<String, Set<Mod>> modHashes;
-        Future<Map<String, Instant>> currentStringsFuture;
-        Future<Map<String, UpdateCheckerUtil.StringUpdate>> updatedStringsFuture;
+        Future<Map<String, Instant>> currentVersionsFuture;
+        Future<Map<String, UpdateCheckerUtil.VersionUpdate>> updatedVersionsFuture;
 
         List<Mod> updatableMods = ModMenu.MODS.values()
                 .stream()
@@ -82,7 +82,7 @@ public class UpdateCheckerUtil {
                         mod.setUpdateInfo(update);
 
                         if (update != null && update.isUpdateAvailable()) {
-                            LOGGER.info("Update available for '{}@{}'", mod.getId(), mod.getString());
+                            LOGGER.info("Update available for '{}@{}'", mod.getId(), mod.getVersion());
                         }
                     });
                 }
@@ -94,12 +94,12 @@ public class UpdateCheckerUtil {
 
             modHashes = getModHashes(withoutUpdateChecker);
 
-            currentStringsFuture = executor.submit(() -> getCurrentStrings(modHashes.keySet()));
-            updatedStringsFuture = executor.submit(() -> getUpdatedStrings(modHashes.keySet()));
+            currentVersionsFuture = executor.submit(() -> getCurrentVersions(modHashes.keySet()));
+            updatedVersionsFuture = executor.submit(() -> getUpdatedVersions(modHashes.keySet()));
 
             try {
-                currentStrings = currentStringsFuture.get();
-                updatedStrings = updatedStringsFuture.get();
+                currentVersions = currentVersionsFuture.get();
+                updatedVersions = updatedVersionsFuture.get();
             } catch (ExecutionException e) {
                 LOGGER.error("Error checking for updates: ", e.getCause() != null ? e.getCause() : e);
             } catch (InterruptedException e) {
@@ -110,13 +110,13 @@ public class UpdateCheckerUtil {
             executor.shutdown();
         }
 
-        if (currentStrings == null || updatedStrings == null) {
+        if (currentVersions == null || updatedVersions == null) {
             return;
         }
 
         for (var hash : modHashes.keySet()) {
-            var date = currentStrings.get(hash);
-            var data = updatedStrings.get(hash);
+            var date = currentVersions.get(hash);
+            var data = updatedVersions.get(hash);
 
             if (date == null || data == null) {
                 continue;
@@ -137,7 +137,7 @@ public class UpdateCheckerUtil {
                 mod.setUpdateInfo(data.asUpdateInfo());
                 LOGGER.info("Update available for '{}@{}', (-> {})",
                         mod.getId(),
-                        mod.getString(),
+                        mod.getVersion(),
                         data.versionNumber
                 );
             }
@@ -178,8 +178,8 @@ public class UpdateCheckerUtil {
     /**
      * @return a map of file hash to its release date on Modrinth.
      */
-    private static @Nullable Map<String, Instant> getCurrentStrings(Collection<String> modHashes) {
-        String body = ModMenu.GSON_MINIFIED.toJson(new CurrentStringsFromHashes(modHashes));
+    private static @Nullable Map<String, Instant> getCurrentVersions(Collection<String> modHashes) {
+        String body = ModMenu.GSON_MINIFIED.toJson(new CurrentVersionsFromHashes(modHashes));
 
         var request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(body))
@@ -221,11 +221,11 @@ public class UpdateCheckerUtil {
         return null;
     }
 
-    public static class CurrentStringsFromHashes {
+    public static class CurrentVersionsFromHashes {
         public Collection<String> hashes;
         public String algorithm = "sha512";
 
-        public CurrentStringsFromHashes(Collection<String> hashes) {
+        public CurrentVersionsFromHashes(Collection<String> hashes) {
             this.hashes = hashes;
         }
     }
@@ -238,34 +238,34 @@ public class UpdateCheckerUtil {
         }
     }
 
-    private static @Nullable Map<String, StringUpdate> getUpdatedStrings(Collection<String> modHashes) {
-        String mcVer = SharedConstants.getCurrentString().name();
-        List<String> loaders = false ? List.of("fabric", "quilt") : List.of("fabric");
+    private static @Nullable Map<String, VersionUpdate> getUpdatedVersions(Collection<String> modHashes) {
+        String mcVer = SharedConstants.getCurrentVersion().name();
+        List<String> loaders = ModMenu.RUNNING_QUILT ? List.of("fabric", "quilt") : List.of("fabric");
         List<UpdateChannel> updateChannels = getUpdateChannels();
 
-        String body = ModMenu.GSON_MINIFIED.toJson(new LatestStringsFromHashesBody(modHashes,
+        String body = ModMenu.GSON_MINIFIED.toJson(new LatestVersionsFromHashesBody(modHashes,
                 loaders,
                 mcVer,
                 updateChannels
         ));
 
         LOGGER.debug("Body: {}", body);
-        var latestStringsRequest = HttpRequest.newBuilder()
+        var latestVersionsRequest = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .header("Content-Type", "application/json")
                 .uri(URI.create("https://api.modrinth.com/v2/version_files/update"));
 
         try {
-            var latestStringsResponse = HttpUtil.request(latestStringsRequest, HttpResponse.BodyHandlers.ofString());
+            var latestVersionsResponse = HttpUtil.request(latestVersionsRequest, HttpResponse.BodyHandlers.ofString());
 
-            int status = latestStringsResponse.statusCode();
+            int status = latestVersionsResponse.statusCode();
             LOGGER.debug("Status: {}", status);
             if (status == 410) {
                 modrinthApiV2Removed = true;
                 LOGGER.warn("Cannot check for updates because Modrinth's API v2 is no longer available.");
             } else if (status == 200) {
-                Map<String, StringUpdate> results = new HashMap<>();
-                JsonObject responseObject = JsonParser.parseString(latestStringsResponse.body()).getAsJsonObject();
+                Map<String, VersionUpdate> results = new HashMap<>();
+                JsonObject responseObject = JsonParser.parseString(latestVersionsResponse.body()).getAsJsonObject();
                 LOGGER.debug(String.valueOf(responseObject));
                 responseObject.asMap().forEach((lookupHash, versionJson) -> {
                     var versionObj = versionJson.getAsJsonObject();
@@ -301,7 +301,7 @@ public class UpdateCheckerUtil {
                             .getAsString();
 
                     results.put(lookupHash,
-                            new StringUpdate(projectId, versionId, versionNumber, date, updateChannel, versionHash)
+                            new VersionUpdate(projectId, versionId, versionNumber, date, updateChannel, versionHash)
                     );
                 });
 
@@ -325,7 +325,7 @@ public class UpdateCheckerUtil {
         };
     }
 
-    private record StringUpdate(
+    private record VersionUpdate(
             String projectId,
             String versionId,
             String versionNumber,
@@ -338,24 +338,24 @@ public class UpdateCheckerUtil {
         }
     }
 
-    public static class LatestStringsFromHashesBody {
+    public static class LatestVersionsFromHashesBody {
         public Collection<String> hashes;
         public String algorithm = "sha512";
         public Collection<String> loaders;
         @SerializedName("game_versions")
-        public Collection<String> gameStrings;
+        public Collection<String> gameVersions;
         @SerializedName("version_types")
         public Collection<String> versionTypes;
 
-        public LatestStringsFromHashesBody(
+        public LatestVersionsFromHashesBody(
                 Collection<String> hashes,
                 Collection<String> loaders,
-                String mcString,
+                String mcVersion,
                 Collection<UpdateChannel> updateChannels
         ) {
             this.hashes = hashes;
             this.loaders = loaders;
-            this.gameStrings = Set.of(mcString);
+            this.gameVersions = Set.of(mcVersion);
             this.versionTypes = updateChannels.stream().map(value -> value.toString().toLowerCase()).toList();
         }
     }

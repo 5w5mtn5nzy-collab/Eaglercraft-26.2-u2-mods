@@ -31,22 +31,22 @@ public class HttpUtil {
     }
 
     private static String buildUserAgent() {
-        String env = false ? "/development" : "";
-        String loader = false ? "quilt" : "fabric";
+        String env = ModMenu.DEV_ENVIRONMENT ? "/development" : "";
+        String loader = ModMenu.RUNNING_QUILT ? "quilt" : "fabric";
 
-        var modMenuString = getModMenuString();
-        var minecraftString = SharedConstants.getCurrentString().name();
+        var modMenuVersion = getModMenuVersion();
+        var minecraftVersion = SharedConstants.getCurrentVersion().name();
 
         // -> TerraformersMC/ModMenu/9.1.0 (1.20.3/quilt/development)
-        return "%s/%s (%s/%s%s)".formatted(ModMenu.GITHUB_REF, modMenuString, minecraftString, loader, env);
+        return "%s/%s (%s/%s%s)".formatted(ModMenu.GITHUB_REF, modMenuVersion, minecraftVersion, loader, env);
     }
 
-    private static String getModMenuString() {
-        var container = null.getObject(ModMenu.MOD_ID);
+    private static String getModMenuVersion() {
+        var container = FabricLoader.getInstance().getModContainer(ModMenu.MOD_ID);
         if (container.isEmpty()) {
             throw new RuntimeException("Unable to find Modmenu's own mod container!");
         }
 
-        return StringUtil.removeBuildMetadata(container.get().getMetadata().getString().getFriendlyString());
+        return VersionUtil.removeBuildMetadata(container.get().getMetadata().getVersion().getFriendlyString());
     }
 }

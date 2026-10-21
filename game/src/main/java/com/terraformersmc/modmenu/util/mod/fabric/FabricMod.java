@@ -8,7 +8,7 @@ import com.terraformersmc.modmenu.ModMenu;
 import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
-import com.terraformersmc.modmenu.util.StringUtil;
+import com.terraformersmc.modmenu.util.VersionUtil;
 import com.terraformersmc.modmenu.util.mod.Mod;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.language.I18n;
@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 public class FabricMod implements Mod {
     private static final Logger LOGGER = LoggerFactory.getLogger("Mod Menu | FabricMod");
 
-    protected final Object container;
-    protected final Object metadata;
+    protected final ModContainer container;
+    protected final ModMetadata metadata;
 
     protected final ModMenuData modMenuData;
 
@@ -43,7 +43,7 @@ public class FabricMod implements Mod {
 
     protected boolean childHasUpdate = false;
 
-    public FabricMod(Object modContainer, Set<String> modpackMods) {
+    public FabricMod(ModContainer modContainer, Set<String> modpackMods) {
         this.container = modContainer;
         this.metadata = modContainer.getMetadata();
 
@@ -57,15 +57,15 @@ public class FabricMod implements Mod {
         ModMenuData.DummyParentData parentData = null;
         Set<String> badgeNames = new HashSet<>();
         CustomValue modMenuValue = metadata.getCustomValue("modmenu");
-        if (modMenuValue != null && modMenuValue.getType() == Object.OBJECT) {
-            Object modMenuObject = modMenuValue.getAsObject();
+        if (modMenuValue != null && modMenuValue.getType() == CustomValue.CvType.OBJECT) {
+            CustomValue.CvObject modMenuObject = modMenuValue.getAsObject();
             CustomValue parentCv = modMenuObject.get("parent");
             if (parentCv != null) {
-                if (parentCv.getType() == Object.STRING) {
+                if (parentCv.getType() == CustomValue.CvType.STRING) {
                     parentId = Optional.of(parentCv.getAsString());
-                } else if (parentCv.getType() == Object.OBJECT) {
+                } else if (parentCv.getType() == CustomValue.CvType.OBJECT) {
                     try {
-                        Object parentObj = parentCv.getAsObject();
+                        CustomValue.CvObject parentObj = parentCv.getAsObject();
                         parentId = CustomValueUtil.getString("id", parentObj);
                         parentData = new ModMenuData.DummyParentData(
                                 parentId.orElseThrow(() -> new RuntimeException("Parent object lacks an id")),
@@ -93,14 +93,14 @@ public class FabricMod implements Mod {
 
         /* Automatically set the mod containing a Loom-generated library as its parent */
         if (isGenerated && parentId.isEmpty() && container.getContainingMod().isPresent()) {
-            Object inside = container.getContainingMod().get();
+            ModContainer inside = container.getContainingMod().get();
             parentId = Optional.of(inside.getMetadata().getId());
         }
         this.modMenuData = new ModMenuData(badgeNames, parentId, parentData, id);
 
         /* Hardcode parents and badges for Fabric API & Fabric Loader */
         if (id.startsWith("fabric") && metadata.containsCustomValue("fabric-api:module-lifecycle")) {
-            if (null.isModLoaded("fabric-api") || !null
+            if (FabricLoader.getInstance().isModLoaded("fabric-api") || !FabricLoader.getInstance()
                     .isModLoaded("fabric")) {
                 modMenuData.fillParentIfEmpty("fabric-api");
             } else {
@@ -143,7 +143,7 @@ public class FabricMod implements Mod {
         }
     }
 
-    public @NotNull Object getContainer() {
+    public @NotNull ModContainer getContainer() {
         return container;
     }
 
@@ -170,9 +170,9 @@ public class FabricMod implements Mod {
         }
 
         final String finalIconSourceId = iconSourceId;
-        Object iconSource = null
-                .getObject(iconSourceId)
-                .orElseThrow(() -> new RuntimeException("Cannot get Object for Fabric mod with id " + finalIconSourceId));
+        ModContainer iconSource = FabricLoader.getInstance()
+                .getModContainer(iconSourceId)
+                .orElseThrow(() -> new RuntimeException("Cannot get ModContainer for Fabric mod with id " + finalIconSourceId));
 
         DynamicTexture icon = iconHandler.createIcon(iconSource, iconPath);
         if (icon == null) {
@@ -182,9 +182,9 @@ public class FabricMod implements Mod {
             }
 
             return Objects.requireNonNull(iconHandler.createIcon(
-                    null
-                            .getObject(ModMenu.MOD_ID)
-                            .orElseThrow(() -> new RuntimeException("Cannot get Object for Fabric mod with id " + ModMenu.MOD_ID)),
+                    FabricLoader.getInstance()
+                            .getModContainer(ModMenu.MOD_ID)
+                            .orElseThrow(() -> new RuntimeException("Cannot get ModContainer for Fabric mod with id " + ModMenu.MOD_ID)),
                     "assets/" + ModMenu.MOD_ID + "/unknown_icon.png"
             ));
         }
@@ -207,16 +207,16 @@ public class FabricMod implements Mod {
     }
 
     @Override
-    public @NotNull String getString() {
+    public @NotNull String getVersion() {
         if ("java".equals(getId())) {
             return System.getProperty("java.version");
         } else {
-            return metadata.getString().getFriendlyString();
+            return metadata.getVersion().getFriendlyString();
         }
     }
 
-    public @NotNull String getPrefixedString() {
-        return StringUtil.getPrefixedString(getString());
+    public @NotNull String getPrefixedVersion() {
+        return VersionUtil.getPrefixedVersion(getVersion());
     }
 
     @Override
@@ -234,7 +234,7 @@ public class FabricMod implements Mod {
     }
 
     @Override
-    public java.util.Map getContact(String author) {
+    public ContactInformation getContact(String author) {
         for (Person person : metadata.getAuthors()) {
             if (person.getName().equals(author)) {
                 return person.getContact();
@@ -370,7 +370,7 @@ public class FabricMod implements Mod {
     }
 
     public @Nullable String getSha512Hash() throws IOException {
-        if (container.getContainingMod().isEmpty() && container.getOrigin().getKind() == Object.Kind.PATH) {
+        if (container.getContainingMod().isEmpty() && container.getOrigin().getKind() == ModOrigin.Kind.PATH) {
             List<Path> paths = container.getOrigin().getPaths();
             var fileOptional = paths.stream()
                     .filter(path -> path.toString().toLowerCase(Locale.ROOT).endsWith(".jar"))

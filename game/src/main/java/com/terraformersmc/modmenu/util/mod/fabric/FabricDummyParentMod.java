@@ -58,9 +58,9 @@ public class FabricDummyParentMod implements Mod {
             }
         }
         final String finalIconSourceId = iconSourceId;
-        Object iconSource = null
-                .getObject(iconSourceId)
-                .orElseThrow(() -> new RuntimeException("Cannot get Object for Fabric mod with id " + finalIconSourceId));
+        ModContainer iconSource = FabricLoader.getInstance()
+                .getModContainer(iconSourceId)
+                .orElseThrow(() -> new RuntimeException("Cannot get ModContainer for Fabric mod with id " + finalIconSourceId));
         return Objects.requireNonNull(
                 iconHandler.createIcon(iconSource, iconPath),
                 "Mod icon for " + getId() + " is null somehow (should be filled with default in this case)"
@@ -77,12 +77,12 @@ public class FabricDummyParentMod implements Mod {
     }
 
     @Override
-    public @NotNull String getString() {
+    public @NotNull String getVersion() {
         return "";
     }
 
     @Override
-    public @NotNull String getPrefixedString() {
+    public @NotNull String getPrefixedVersion() {
         return "";
     }
 
@@ -92,7 +92,7 @@ public class FabricDummyParentMod implements Mod {
     }
 
     @Override
-    public java.util.Map getContact(String author) {
+    public ContactInformation getContact(String author) {
         return null;
     }
 

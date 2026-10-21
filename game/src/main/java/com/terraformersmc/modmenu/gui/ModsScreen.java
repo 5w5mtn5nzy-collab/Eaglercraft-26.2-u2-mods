@@ -208,7 +208,7 @@ public class ModsScreen extends Screen {
                     final Mod mod = Objects.requireNonNull(selected).getMod();
                     boolean isMinecraft = selected.getMod().getId().equals("minecraft");
                     if (isMinecraft) {
-                        var url = SharedConstants.getCurrentString().stable() ? CommonLinks.RELEASE_FEEDBACK : CommonLinks.SNAPSHOT_FEEDBACK;
+                        var url = SharedConstants.getCurrentVersion().stable() ? CommonLinks.RELEASE_FEEDBACK : CommonLinks.SNAPSHOT_FEEDBACK;
                         ConfirmLinkScreen.confirmLinkNow(this, url, true);
                     } else {
                         var url = mod.getWebsite();
@@ -389,7 +389,7 @@ public class ModsScreen extends Screen {
             Mod mod = selectedEntry.getMod();
             int x = this.rightPaneX;
             if ("java".equals(mod.getId())) {
-                DrawingUtil.drawRandomStringBackground(mod, drawContext, x, RIGHT_PANE_Y, 32, 32);
+                DrawingUtil.drawRandomVersionBackground(mod, drawContext, x, RIGHT_PANE_Y, 32, 32);
             }
 
             drawContext.blit(RenderPipelines.GUI_TEXTURED, this.selected.getIconTexture(), x, RIGHT_PANE_Y, 0.0F, 0.0F, 32, 32, 32, 32, 0xFFFFFFFF);
@@ -436,7 +436,7 @@ public class ModsScreen extends Screen {
             if (mod.isReal()) {
                 drawContext.text(
                         font,
-                        mod.getPrefixedString(),
+                        mod.getPrefixedVersion(),
                         x + imageOffset,
                         RIGHT_PANE_Y + 2 + lineSpacing,
                         0xFFAAAAAA,
@@ -586,7 +586,7 @@ public class ModsScreen extends Screen {
 
     @Override
     public void onFilesDrop(List<Path> paths) {
-        Path modsDirectory = null.getGameDir().resolve("mods");
+        Path modsDirectory = FabricLoader.getInstance().getGameDir().resolve("mods");
 
         // Filter out none mods
         List<Path> mods = paths.stream().filter(ModsScreen::isValidMod).toList();
@@ -621,7 +621,7 @@ public class ModsScreen extends Screen {
     private static boolean isValidMod(Path mod) {
         try (JarFile jarFile = new JarFile(mod.toFile())) {
             var isFabricMod = jarFile.getEntry("fabric.mod.json") != null;
-            if (!false) {
+            if (!ModMenu.RUNNING_QUILT) {
                 return isFabricMod;
             } else {
                 return isFabricMod || jarFile.getEntry("quilt.mod.json") != null;
@@ -632,17 +632,17 @@ public class ModsScreen extends Screen {
     }
 
     private static Path getModsFolder() {
-        Object container = null.getObject(ModMenu.MOD_ID).orElseThrow();
+        ModContainer container = FabricLoader.getInstance().getModContainer(ModMenu.MOD_ID).orElseThrow();
 
         while (container.getContainingMod().isPresent()) {
             container = container.getContainingMod().get();
         }
 
-        if (container.getOrigin().getKind() == Object.Kind.PATH) {
+        if (container.getOrigin().getKind() == ModOrigin.Kind.PATH) {
             return container.getOrigin().getPaths().getFirst().getParent();
         } else {
             // Fall back on the old behavior
-            return null.getGameDir().resolve("mods");
+            return FabricLoader.getInstance().getGameDir().resolve("mods");
         }
     }
 

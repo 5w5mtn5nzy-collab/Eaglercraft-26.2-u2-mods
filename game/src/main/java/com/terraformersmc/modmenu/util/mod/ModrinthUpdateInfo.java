@@ -2,7 +2,7 @@ package com.terraformersmc.modmenu.util.mod;
 
 import com.terraformersmc.modmenu.api.UpdateChannel;
 import com.terraformersmc.modmenu.api.UpdateInfo;
-import com.terraformersmc.modmenu.util.StringUtil;
+import com.terraformersmc.modmenu.util.VersionUtil;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +17,7 @@ public record ModrinthUpdateInfo(String projectId, String versionId, String vers
 
 	@Override
 	public @NotNull Component getUpdateMessage() {
-        String versionNoPrefix = StringUtil.stripPrefix(this.versionNumber);
+        String versionNoPrefix = VersionUtil.stripPrefix(this.versionNumber);
         String key = "modmenu.updateText";
         if (!Character.isDigit(versionNoPrefix.charAt(0))) {
             key += ".nonNumerical";

@@ -6,7 +6,6 @@ import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.util.mod.fabric.FabricIconHandler;
-import eu.pb4.placeholders.api.ParserContext;
 import net.minecraft.locale.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +75,13 @@ public interface Mod {
                 Component.literal(string);
     }
 
-    @NotNull String getString();
+    @NotNull String getVersion();
 
-    @NotNull String getPrefixedString();
+    @NotNull String getPrefixedVersion();
 
     @NotNull List<String> getAuthors();
 
-    java.util.Map getContact(String author);
+    ContactInformation getContact(String author);
 
     /**
      * @return a mapping of contributors to their roles.

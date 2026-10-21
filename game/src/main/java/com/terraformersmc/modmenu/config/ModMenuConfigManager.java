@@ -25,7 +25,7 @@ public class ModMenuConfigManager {
 
     private static void prepareConfigPath() {
         if (path == null) {
-            path = null.getConfigDir().resolve(ModMenu.MOD_ID + ".json");
+            path = FabricLoader.getInstance().getConfigDir().resolve(ModMenu.MOD_ID + ".json");
         }
     }
 

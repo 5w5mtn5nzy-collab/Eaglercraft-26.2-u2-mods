@@ -21,7 +21,7 @@ public class FabricIconHandler implements Closeable {
 
     private final Map<Path, DynamicTexture> modIconCache = new HashMap<>();
 
-    public DynamicTexture createIcon(Object iconSource, String iconPath) {
+    public DynamicTexture createIcon(ModContainer iconSource, String iconPath) {
         try {
             Path path = iconSource.getPath(iconPath);
             DynamicTexture cachedIcon = getCachedModIcon(path);

@@ -14,11 +14,11 @@ import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Random;
 
-
+@Environment(EnvType.CLIENT)
 public class DrawingUtil {
     private static final Minecraft CLIENT = Minecraft.getInstance();
 
-    public static void drawRandomStringBackground(
+    public static void drawRandomVersionBackground(
             Mod mod,
             GuiGraphicsExtractor drawContext,
             int x,
@@ -26,7 +26,7 @@ public class DrawingUtil {
             int width,
             int height
     ) {
-        int seed = mod.getName().hashCode() + mod.getString().hashCode();
+        int seed = mod.getName().hashCode() + mod.getVersion().hashCode();
 
         Random random = new Random(seed);
         int color = 0xFF000000 | Mth.hsvToRgb(random.nextFloat(1f), random.nextFloat(0.7f, 0.8f), 0.9f);
