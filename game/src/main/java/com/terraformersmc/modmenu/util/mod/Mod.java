@@ -1,7 +1,6 @@
 package com.terraformersmc.modmenu.util.mod;
 
 import com.terraformersmc.modmenu.ModMenu;
-import com.terraformersmc.modmenu.TextPlaceholderApiCompat;
 import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
@@ -39,9 +38,7 @@ public interface Mod {
     @NotNull
     default String getSummary() {
         String string = getTranslatedSummary();
-        return ModMenu.TEXT_PLACEHOLDER_COMPAT ?
-                TextPlaceholderApiCompat.PARSER.parseComponent(string, ParserContext.of()).getString() :
-                string;
+        return string;
     }
 
     @NotNull
@@ -70,9 +67,7 @@ public interface Mod {
 
     default Component getFormattedDescription() {
         String string = getTranslatedDescription();
-        return ModMenu.TEXT_PLACEHOLDER_COMPAT ?
-                TextPlaceholderApiCompat.PARSER.parseComponent(string, ParserContext.of()) :
-                Component.literal(string);
+        return Component.literal(string);
     }
 
     @NotNull String getVersion();
