@@ -1,0 +1,86 @@
+name: Build EPKs and HTML
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'game/src/main/resources/**'
+      - 'platform/**'
+      - 'platform-lwjgl/**'
+      - 'target_lwjgl_desktop/**'
+      - 'target_teavm/**'
+      - 'target_teavm_wasm_gc/**'
+      - 'target_teavm_wasm_gc_mesh/**'
+      - 'target_teavm_wasm_gc_server/**'
+      - 'wasm-toolchain/**'
+      - 'build.gradle.kts'
+      - 'gradlew'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GRADLE_OPTS: "-Xmx14g -Dorg.gradle.jvmargs=-Xmx14g -Dfile.encoding=UTF-8"
+      JAVA_TOOL_OPTIONS: "-Xmx14g"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'gradle'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build all assets EPKs (music optional)
+        run: |
+          # Prefer building all EPK variants; never force music download unless explicitly needed
+          ./gradlew :target_lwjgl_desktop:buildAssetsEPK :target_lwjgl_desktop:buildAssetsEPKWithWebUnreachable --console=plain --no-daemon
+        env:
+          GRADLE_OPTS: "-Xmx14g -Dorg.gradle.jvmargs=-Xmx14g"
+
+      - name: Build TeaVM HTML (Web client)
+        run: |
+          ./gradlew :target_teavm:compileJava :target_teavm:processResources :target_teavm:classes :target_teavm:buildMainJS --console=plain --no-daemon
+        env:
+          GRADLE_OPTS: "-Xmx14g -Dorg.gradle.jvmargs=-Xmx14g"
+
+      - name: Prepare output directory
+        run: |
+          mkdir -p output
+          find . -name "classes.js" -o -name "assets.epk" -o -name "eaglercraft*.html" -o -name "index.html" | head -40
+          # Copy common TeaVM outputs
+          cp -v target_teavm/build/javascript/classes.js output/ 2>/dev/null || true
+          cp -v target_teavm/build/javascript/index.html output/ 2>/dev/null || true
+          cp -v target_teavm/build/epk/*.epk output/ 2>/dev/null || true
+          cp -v target_lwjgl_desktop/build/epk/*.epk output/ 2>/dev/null || true
+          ls -lh output/
+
+      - name: Commit and push to output/
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output/
+          git diff --cached --quiet || git commit -m "Build EPKs and HTML $(date -u +%Y%m%d-%H%M%S)"
+          git push origin HEAD:main
