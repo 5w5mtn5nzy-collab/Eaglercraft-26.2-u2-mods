@@ -30,6 +30,11 @@ public class FabricMod implements Mod {
 
     protected final ModContainer container;
     protected final ModMetadata metadata;
+    private final String syntheticId;
+    private final String syntheticName;
+    private final String syntheticDescription;
+    private final String syntheticVersion;
+    private final List<String> syntheticAuthors;
 
     protected final ModMenuData modMenuData;
 
@@ -46,9 +51,27 @@ public class FabricMod implements Mod {
 
     protected boolean childHasUpdate = false;
 
+    public FabricMod(String id, String name, String description, String version, List<String> authors, Set<Badge> badges) {
+        this.container = null;
+        this.metadata = null;
+        this.syntheticId = id;
+        this.syntheticName = name;
+        this.syntheticDescription = description;
+        this.syntheticVersion = version;
+        this.syntheticAuthors = List.copyOf(authors);
+        this.badges = badges;
+        this.modMenuData = new ModMenuData(Set.of(), Optional.empty(), null, id);
+        this.allowsUpdateChecks = false;
+    }
+
     public FabricMod(ModContainer modContainer, Set<String> modpackMods) {
         this.container = modContainer;
         this.metadata = modContainer.getMetadata();
+        this.syntheticId = null;
+        this.syntheticName = null;
+        this.syntheticDescription = null;
+        this.syntheticVersion = null;
+        this.syntheticAuthors = List.of();
 
         String id = metadata.getId();
         if ("minecraft".equals(id) || "java".equals(id)) {
@@ -152,16 +175,19 @@ public class FabricMod implements Mod {
 
     @Override
     public @NotNull String getId() {
-        return metadata.getId();
+        return metadata == null ? syntheticId : metadata.getId();
     }
 
     @Override
     public @NotNull String getName() {
-        return metadata.getName();
+        return metadata == null ? syntheticName : metadata.getName();
     }
 
     @Override
     public @NotNull DynamicTexture getIcon(FabricIconHandler iconHandler, int i) {
+        if (metadata == null) {
+            return null;
+        }
         String iconSourceId = getId();
         String iconPath = metadata.getIconPath(i).orElse("assets/" + getId() + "/icon.png");
         if ("minecraft".equals(getId())) {
@@ -196,7 +222,7 @@ public class FabricMod implements Mod {
 
     @Override
     public @NotNull String getDescription() {
-        return metadata.getDescription();
+        return metadata == null ? syntheticDescription : metadata.getDescription();
     }
 
     @Override
@@ -211,6 +237,9 @@ public class FabricMod implements Mod {
 
     @Override
     public @NotNull String getVersion() {
+        if (metadata == null) {
+            return syntheticVersion;
+        }
         if ("java".equals(getId())) {
             return System.getProperty("java.version");
         } else {
@@ -224,6 +253,9 @@ public class FabricMod implements Mod {
 
     @Override
     public @NotNull List<String> getAuthors() {
+        if (metadata == null) {
+            return syntheticAuthors;
+        }
         var authors = metadata.getAuthors().stream().map(Person::getName).collect(Collectors.toList());
         if (authors.isEmpty()) {
             if ("minecraft".equals(getId())) {
@@ -238,6 +270,9 @@ public class FabricMod implements Mod {
 
     @Override
     public ContactInformation getContact(String author) {
+        if (metadata == null) {
+            return null;
+        }
         for (Person person : metadata.getAuthors()) {
             if (person.getName().equals(author)) {
                 return person.getContact();
@@ -254,6 +289,9 @@ public class FabricMod implements Mod {
     @Override
     public @NotNull Map<String, Collection<String>> getContributors() {
         var contributors = new LinkedHashMap<String, Collection<String>>();
+        if (metadata == null) {
+            return contributors;
+        }
         for (var contributor : this.metadata.getContributors()) {
             contributors.put(contributor.getName(), List.of("Contributor"));
         }
@@ -292,8 +330,10 @@ public class FabricMod implements Mod {
             return "https://www.minecraft.net/";
         } else if ("java".equals(getId())) {
             return System.getProperty("java.vendor.url");
-        } else {
+        } else if (metadata != null) {
             return metadata.getContact().get("homepage").orElse(null);
+        } else {
+            return null;
         }
     }
 
@@ -301,14 +341,16 @@ public class FabricMod implements Mod {
     public @Nullable String getIssueTracker() {
         if ("minecraft".equals(getId())) {
             return "https://aka.ms/snapshotbugs?ref=game";
-        } else {
+        } else if (metadata != null) {
             return metadata.getContact().get("issues").orElse(null);
+        } else {
+            return null;
         }
     }
 
     @Override
     public @Nullable String getSource() {
-        return metadata.getContact().get("sources").orElse(null);
+        return metadata == null ? null : metadata.getContact().get("sources").orElse(null);
     }
 
     @Override
@@ -320,8 +362,10 @@ public class FabricMod implements Mod {
     public @NotNull Set<String> getLicense() {
         if ("minecraft".equals(getId())) {
             return Sets.newHashSet("Minecraft EULA");
-        } else {
+        } else if (metadata != null) {
             return Sets.newHashSet(metadata.getLicense());
+        } else {
+            return Set.of();
         }
     }
 
@@ -373,7 +417,7 @@ public class FabricMod implements Mod {
     }
 
     public @Nullable String getSha512Hash() throws IOException {
-        if (container.getContainingMod().isEmpty() && container.getOrigin().getKind() == ModOrigin.Kind.PATH) {
+        if (container != null && container.getContainingMod().isEmpty() && container.getOrigin().getKind() == ModOrigin.Kind.PATH) {
             List<Path> paths = container.getOrigin().getPaths();
             var fileOptional = paths.stream()
                     .filter(path -> path.toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
