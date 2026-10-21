@@ -25,6 +25,7 @@ dependencies {
 	// The browser-specific Mod Menu replacements retain the shared Fabric Loader
 	// API descriptors but never invoke a live loader instance.
 	compileOnly("net.fabricmc:fabric-loader:0.20.1")
+	compileOnly("org.jetbrains:annotations:26.0.2")
 	// Phase 3.3b: org.lwjgl.* is provided by THIS module's linkage stubs
 	// (src/main/java/org/lwjgl/**) — real LWJGL jars must NOT be on this compile
 	// classpath or javac could prefer the jar classes over the stub sources.
