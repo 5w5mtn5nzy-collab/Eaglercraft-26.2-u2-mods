@@ -1993,7 +1993,6 @@ public class Minecraft extends ReentrantBlockableEventLoop<Runnable> implements 
       profiler.push("gui");
       this.textInputManager.tick();
       this.gui.tick();
-      com.terraformersmc.modmenu.event.ModMenuEventHandler.onClientEndTick(this);
       if (this.gui.screen() != null) {
          this.missTime = 10000;
       }
