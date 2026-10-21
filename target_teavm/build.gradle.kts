@@ -76,7 +76,8 @@ teavm {
 		// minification is both the RAM fix and the worker-boot fix. Flip back to false
 		// temporarily when a bug needs grep-able generated JS (deploy patcher is
 		// obfuscation-safe — structural regex).
-		obfuscated = true
+		// Keep optimized production output by default; CI can disable minification for faster builds.
+		obfuscated = providers.gradleProperty("eaglerObfuscated").map { it.toBoolean() }.getOrElse(true)
 		sourceMap = false
 	}
 }
