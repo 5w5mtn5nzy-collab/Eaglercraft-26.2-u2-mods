@@ -49,7 +49,7 @@ jobs:
       - name: Build EPK assets and TeaVM web client
         run: |
           # Build all required outputs in one Gradle invocation so shared project tasks run only once.
-          ./gradlew :target_lwjgl_desktop:buildAssetsEPK :target_lwjgl_desktop:buildAssetsEPKWithWebUnreachable :target_teavm:compileJava :target_teavm:processResources :target_teavm:classes :target_teavm:generateJavaScript --console=plain --no-daemon --build-cache
+          ./gradlew :target_lwjgl_desktop:buildAssetsEPK :target_lwjgl_desktop:buildAssetsEPKWithWebUnreachable :target_teavm:compileJava :target_teavm:processResources :target_teavm:classes :target_teavm:generateJavaScript --console=plain --no-daemon --build-cache -PeaglerObfuscated=false
         env:
           GRADLE_OPTS: "-Xmx14g -Dorg.gradle.jvmargs=-Xmx14g"
 
