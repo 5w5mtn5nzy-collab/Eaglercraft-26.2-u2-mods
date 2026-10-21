@@ -82,6 +82,7 @@ public class TitleScreen extends Screen {
 
    @Override
    protected void init() {
+      ModMenu.ensureInitialized();
       if (this.splash == null) {
          this.splash = this.minecraft.gui.splashManager().getSplash();
       }
@@ -121,6 +122,28 @@ public class TitleScreen extends Screen {
          CommonButtons.accessibility(20, var1x -> this.minecraft.gui.setScreen(new AccessibilityOptionsScreen(this, this.minecraft.options)), true)
       );
       accessibility.setPosition(this.getHorizontalPosition(++currentButton, numberOfButtons, 20), topPos);
+      if (modMenuIcon) {
+         this.addRenderableWidget(new SmallModMenuButtonWidget(
+            this.getHorizontalPosition(++currentButton, numberOfButtons, 20),
+            topPos,
+            20,
+            20,
+            ModMenuApi.createModsButtonText(),
+            20,
+            20,
+            0,
+            0,
+            new WidgetSprites(
+               SmallModMenuButtonWidget.MODS_SPRITE_ENABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_DISABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_FOCUSED
+            ),
+            var1x -> this.minecraft.gui.setScreen(new ModsScreen(this)),
+            ModMenuApi.createModsButtonText(),
+            null,
+            false
+         ));
+      }
       Button.Builder var10001 = Button.builder(
          Component.translatable("menu.options"), var1x -> this.minecraft.gui.setScreen(new OptionsScreen(this, this.minecraft.options, false))
       );
@@ -148,6 +171,13 @@ public class TitleScreen extends Screen {
             this.font
          )
       );
+      if (modMenuText) {
+         this.addRenderableWidget(
+            Button.builder(ModMenuApi.createModsButtonText(), var1x -> this.minecraft.gui.setScreen(new ModsScreen(this)))
+               .bounds(this.width / 2 - 100, topPos + 24, 200, 20)
+               .build()
+         );
+      }
       // Keep the title screen cold. A stopped integrated-server worker owns a
       // private Wasm-GC heap, and starting fresh mesh workers here immediately
       // after Save and Quit defeats deterministic world teardown. The selected

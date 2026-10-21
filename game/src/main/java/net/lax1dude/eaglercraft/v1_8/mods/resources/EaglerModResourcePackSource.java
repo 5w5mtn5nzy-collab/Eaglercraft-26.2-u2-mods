@@ -1,5 +1,7 @@
 package net.lax1dude.eaglercraft.v1_8.mods.resources;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
@@ -44,6 +46,29 @@ public final class EaglerModResourcePackSource implements RepositorySource {
 
     EaglerModResourceSnapshot snapshot() {
         return this.snapshot;
+    }
+
+    /**
+     * Returns the ids of every Eaglercraft module currently mounted into the validated
+     * mod resource registry. Returns an empty list when no registry is published or when
+     * the native bridge is unavailable (desktop JVM builds without the JS bridge).
+     */
+    public static List<String> mountedModuleIds() {
+        try {
+            EaglerModResourceSnapshot snapshot = EaglerModResourceSnapshot.capture();
+            if (snapshot.isEmpty() || snapshot.isRejected()) {
+                return List.of();
+            }
+            List<String> result = new ArrayList<>();
+            for (EaglerModResourceMountRequests.MountRequest request : snapshot.mountRequests) {
+                if (!result.contains(request.moduleId())) {
+                    result.add(request.moduleId());
+                }
+            }
+            return List.copyOf(result);
+        } catch (Throwable unavailable) {
+            return List.of();
+        }
     }
 
     @Override

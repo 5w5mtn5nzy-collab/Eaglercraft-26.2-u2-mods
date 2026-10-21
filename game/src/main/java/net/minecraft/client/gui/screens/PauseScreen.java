@@ -71,6 +71,7 @@ public class PauseScreen extends Screen {
 
    @Override
    protected void init() {
+      ModMenu.ensureInitialized();
       if (this.showPauseMenu) {
          this.createPauseMenu();
       }
@@ -79,6 +80,30 @@ public class PauseScreen extends Screen {
       this.addRenderableWidget(new StringWidget(this.width / 2 - textWidth / 2, this.showPauseMenu ? 40 : 10, textWidth, 9, this.title, this.font));
       if (this.showPauseMenu && net.lax1dude.eaglercraft.v1_8.minecraft.EaglerHosted.isActive()) {
          this.addRenderableWidget(new RelaySettingsLink(this));
+      }
+      if (this.showPauseMenu
+         && ModMenuConfig.MODIFY_GAME_MENU.getValue()
+         && ModMenuConfig.GAME_MENU_BUTTON_STYLE.getValue() == ModMenuConfig.GameMenuButtonStyle.ICON) {
+         this.addRenderableWidget(new SmallModMenuButtonWidget(
+            this.width - 24,
+            6,
+            20,
+            20,
+            ModMenuApi.createModsButtonText(),
+            20,
+            20,
+            0,
+            0,
+            new WidgetSprites(
+               SmallModMenuButtonWidget.MODS_SPRITE_ENABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_DISABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_FOCUSED
+            ),
+            var1x -> this.minecraft.gui.setScreen(new ModsScreen(this)),
+            ModMenuApi.createModsButtonText(),
+            null,
+            false
+         ));
       }
    }
 
