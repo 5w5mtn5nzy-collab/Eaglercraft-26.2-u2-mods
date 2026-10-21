@@ -8,7 +8,7 @@ concurrency:
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, 'fix/**' ]
     paths:
       - '.github/workflows/**'
       - 'game/src/main/resources/**'
@@ -16,6 +16,7 @@ on:
       - 'game/build.gradle.kts'
       - 'platform/**'
       - 'platform-lwjgl/**'
+      - 'platform-teavm/**'
       - 'target_lwjgl_desktop/**'
       - 'target_teavm/**'
       - 'target_teavm_wasm_gc/**'
@@ -75,7 +76,6 @@ jobs:
           restore-keys: |
             eagler-build-${{ runner.os }}-jdk25-
 
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -91,7 +91,7 @@ jobs:
           mkdir -p output
           find . -name "classes.js" -o -name "assets.epk" -o -name "eaglercraft*.html" -o -name "index.html" | head -40
           # Copy common TeaVM outputs
-          find target_teavm/build -type f -name "classes.js" -exec cp -v {} output/ \;
+          find target_teavm/build -type f -name "classes.js" -exec cp -v {} output/ \\;
           cp -v target_teavm/src/web/index.html output/
           cp -v target_teavm/build/epk/*.epk output/ 2>/dev/null || true
           cp -v target_lwjgl_desktop/build/epk/*.epk output/ 2>/dev/null || true
