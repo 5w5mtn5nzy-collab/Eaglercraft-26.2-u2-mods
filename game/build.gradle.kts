@@ -2,6 +2,15 @@ plugins {
 	id("java")
 }
 
+// Mod Menu requires Fabric Loader/API and Quilt APIs, which this Eaglercraft
+// build does not provide. Keep its source files in the repository but exclude
+// them from this non-Fabric game compilation.
+sourceSets {
+	named("main") {
+		java.exclude("com/terraformersmc/modmenu/**")
+	}
+}
+
 dependencies {
 	implementation(project(":platform"))
 
