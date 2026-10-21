@@ -75,7 +75,7 @@ teavm {
 		// Size pass (Matej directive 2026-07-05): obfuscated=true minifies identifiers
 		// (~40-50% smaller classes.js + big parse-RAM cut). Costs roughly 2x link time.
 		// FLIPPED ON 2026-07-11 (c82+): the RAM profile measured 392MB source string +
-		// 137MB code = 42% of the JS heap, and each mesh worker parses its own copy — 
+		// 137MB code = 42% of the JS heap, and each mesh worker parses its own copy —
 		// minification is both the RAM fix and the worker-boot fix. Flip back to false
 		// temporarily when a bug needs grep-able generated JS (deploy patcher is
 		// obfuscation-safe — structural regex).
