@@ -1,5 +1,11 @@
 package net.minecraft.client.gui.screens;
 
+import com.terraformersmc.modmenu.ModMenu;
+import com.terraformersmc.modmenu.api.ModMenuApi;
+import com.terraformersmc.modmenu.config.ModMenuConfig;
+import com.terraformersmc.modmenu.gui.ModsScreen;
+import com.terraformersmc.modmenu.gui.widget.SmallModMenuButtonWidget;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +21,7 @@ import net.minecraft.client.gui.components.CommonButtons;
 import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.toasts.NowPlayingToast;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.GridLayout;
@@ -71,6 +78,7 @@ public class PauseScreen extends Screen {
 
    @Override
    protected void init() {
+      ModMenu.ensureInitialized();
       if (this.showPauseMenu) {
          this.createPauseMenu();
       }
@@ -79,6 +87,30 @@ public class PauseScreen extends Screen {
       this.addRenderableWidget(new StringWidget(this.width / 2 - textWidth / 2, this.showPauseMenu ? 40 : 10, textWidth, 9, this.title, this.font));
       if (this.showPauseMenu && net.lax1dude.eaglercraft.v1_8.minecraft.EaglerHosted.isActive()) {
          this.addRenderableWidget(new RelaySettingsLink(this));
+      }
+      if (this.showPauseMenu
+         && ModMenuConfig.MODIFY_GAME_MENU.getValue()
+         && ModMenuConfig.GAME_MENU_BUTTON_STYLE.getValue() == ModMenuConfig.GameMenuButtonStyle.ICON) {
+         this.addRenderableWidget(new SmallModMenuButtonWidget(
+            this.width - 24,
+            6,
+            20,
+            20,
+            ModMenuApi.createModsButtonText(),
+            20,
+            20,
+            0,
+            0,
+            new WidgetSprites(
+               SmallModMenuButtonWidget.MODS_SPRITE_ENABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_DISABLED,
+               SmallModMenuButtonWidget.MODS_SPRITE_FOCUSED
+            ),
+            var1x -> this.minecraft.gui.setScreen(new ModsScreen(this)),
+            ModMenuApi.createModsButtonText(),
+            null,
+            false
+         ));
       }
 
    }
