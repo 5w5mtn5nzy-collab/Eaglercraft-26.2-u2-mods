@@ -115,7 +115,7 @@ public class ModMenuEventHandler {
         UpdateCheckerUtil.triggerV2RemovedToast();
     }
 
-    private static void onClientEndTick(Minecraft client) {
+    public static void onClientEndTick(Minecraft client) {
         while (MENU_KEY_MAPPING.consumeClick()) {
             client.gui.setScreen(new ModsScreen(client.gui.screen()));
         }
