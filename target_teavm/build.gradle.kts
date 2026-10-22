@@ -6,7 +6,7 @@ plugins {
 // Eagler method: the real logging stack never ships to the web target.
 // slf4j-api / log4j2 / com.mojang:logging are replaced by the facades in
 // :teavm-compat (org.slf4j.*, com.mojang.logging.*, netty factory shadow) —
-// log4j-core's init dies on TeaVM's regex engine (\P{InBasic_Latin}).
+// log4j-core's init dies on TeaVM's regex engine (\\P{InBasic_Latin}).
 // (Replicated verbatim from target_teavm_spike/build.gradle.kts.)
 configurations.configureEach {
 	exclude(group = "org.slf4j")
@@ -53,6 +53,9 @@ dependencies {
 	implementation(project(":platform-teavm"))
 	implementation(project(":platform"))
 	implementation(project(":game"))
+	// Fabric Loader API types are referenced by shared Mod Menu interfaces. The
+	// web-specific replacements in :platform-teavm avoid invoking a real loader.
+	implementation("net.fabricmc:fabric-loader:0.20.1")
 	// Phase 3.0 classlib-compat: missing-JDK shims + TeaVM plugin (see teavm-compat/)
 	// Also provides the org.slf4j / com.mojang.logging facades the log exclusion
 	// above removes, and the setEaglerRedirector hook platform-teavm calls.
