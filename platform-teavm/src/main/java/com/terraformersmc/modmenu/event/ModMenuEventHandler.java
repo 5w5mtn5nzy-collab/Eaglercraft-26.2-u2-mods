@@ -11,4 +11,12 @@ public final class ModMenuEventHandler {
     public static void register() {
         // Fabric key mappings and screen/tick events are not available in the browser.
     }
+
+    /**
+     * Compatibility hook used by the shared Eaglercraft client startup path.
+     * Browser builds do not have Fabric client tick events to dispatch here.
+     */
+    public static void onClientEndTick(net.minecraft.client.Minecraft minecraft) {
+        // Intentionally empty for the browser target.
+    }
 }
